@@ -3,11 +3,12 @@ Single-endpoint app that takes a blob name and serves it up from the
 configured GCP bucket. The assumption is that this sits behind an
 nginx auth_request.
 """
-from flask import Flask, Response, request, abort
+from flask import Flask, Response, abort
 from google.cloud import storage
 import logging
 import os
 DEFAULT_BUCKET = 'uwit-iam-identity-artifacts'
+
 
 def configure_logging():
     gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -15,6 +16,7 @@ def configure_logging():
     if gunicorn_logger:
         level = gunicorn_logger.level
     logging.getLogger().setLevel(level)
+
 
 configure_logging()
 app = Flask(__name__)

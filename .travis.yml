@@ -1,0 +1,23 @@
+services:
+  - docker
+
+language: python
+python: ["3.6"]  # we don't use this in docker
+
+env:
+  - DOCKER_IMAGE=gcp-bucket-for-sso
+
+install:
+  - pip install flake8
+
+script:
+  - flake8 .
+  - docker build -t "${DOCKER_IMAGE}" .
+
+after_success:
+  - test -z "$TRAVIS_PULL_REQUEST_BRANCH" || travis_terminate 0
+  - export BRANCH_TAG=$TRAVIS_BRANCH-$(date '+%s')
+  - export TAG=${TRAVIS_TAG:-$BRANCH_TAG}
+  - echo "$CONTAINER_ADMIN_TOKEN" | base64 -d | docker login -u "$CONTAINER_USER" --password-stdin "$CONTAINER_DOMAIN"
+  - docker tag "${DOCKER_IMAGE}" "${CONTAINER_REPO}/${DOCKER_IMAGE}:${TAG}"
+  - docker push "${CONTAINER_REPO}/${DOCKER_IMAGE}:${TAG}"
