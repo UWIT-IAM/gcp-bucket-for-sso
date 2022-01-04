@@ -7,7 +7,11 @@ from flask import Flask, Response, request, abort
 from google.cloud import storage
 import logging
 import os
+
+from google.cloud.storage import Blob
+
 DEFAULT_BUCKET = 'uwit-iam-identity-artifacts'
+
 
 def configure_logging():
     gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -15,6 +19,7 @@ def configure_logging():
     if gunicorn_logger:
         level = gunicorn_logger.level
     logging.getLogger().setLevel(level)
+
 
 configure_logging()
 app = Flask(__name__)
@@ -35,8 +40,9 @@ def proxy(path):
     bucket = storage.Client().bucket(bucket_name)
     if path.endswith('/'):
         path += 'index.html'
-    blob = bucket.get_blob(path)
+
+    blob: Blob = bucket.get_blob(path)
     if not blob:
         app.logger.error(f'not found: {path}')
         abort(404)
-    return Response(blob.download_as_string(), mimetype=blob.content_type)
+    return Response(blob.download_as_bytes(checksum=None), mimetype=blob.content_type)
